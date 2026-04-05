@@ -1,0 +1,26 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Close a Chrome tab by window and tab index.
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "Usage: tabby close <window> <tab>"
+    exit 0
+fi
+
+if [[ $# -ne 2 ]]; then
+    echo "Usage: tabby close <window> <tab>" >&2
+    exit 1
+fi
+
+osascript -l JavaScript - "$1" "$2" <<'JS'
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const wi = parseInt(args[4].js);
+const ti = parseInt(args[5].js);
+const chrome = Application("Google Chrome");
+const win = chrome.windows[wi - 1];
+const tab = win.tabs[ti - 1];
+const title = tab.title();
+tab.close();
+`Closed: ${title}`;
+JS

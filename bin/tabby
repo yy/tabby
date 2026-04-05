@@ -1,0 +1,39 @@
+#!/bin/zsh
+set -euo pipefail
+
+# tabby — a Mac CLI for herding browser tabs
+
+TABBY_ROOT="${0:A:h:h}"
+LIBDIR="$TABBY_ROOT/lib"
+
+usage() {
+    cat <<'USAGE'
+tabby — herd your browser tabs
+
+Usage: tabby <command> [options]
+
+Commands:
+  list          List all tabs as JSON
+  count         Count open tabs
+  url           Get URL of active or specific tab
+  close         Close a tab by window/tab index
+  dedup         Close duplicate tabs
+  help          Show this help
+
+Options vary by command. Run `tabby <command> --help` for details.
+USAGE
+}
+
+cmd="${1:-help}"
+shift 2>/dev/null || true
+
+subcmd="$LIBDIR/tabby-$cmd"
+if [[ -x "$subcmd" ]]; then
+    exec "$subcmd" "$@"
+elif [[ "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+    usage
+else
+    echo "tabby: unknown command '$cmd'" >&2
+    echo "Run 'tabby help' for usage." >&2
+    exit 1
+fi

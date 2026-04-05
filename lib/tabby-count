@@ -1,0 +1,34 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Count Chrome tabs.
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "Usage: tabby count [--total]"
+    echo "  Count open tabs per window."
+    echo "  --total   Print only the total number"
+    exit 0
+fi
+
+total_only=false
+[[ "${1:-}" == "--total" ]] && total_only=true
+
+osascript -l JavaScript - "$total_only" <<'JS'
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const totalOnly = args[4].js === "true";
+const chrome = Application("Google Chrome");
+const windows = chrome.windows();
+let total = 0;
+const lines = [];
+for (let wi = 0; wi < windows.length; wi++) {
+    const count = windows[wi].tabs().length;
+    total += count;
+    lines.push(`Window ${wi + 1}: ${count} tabs`);
+}
+if (totalOnly) {
+    `${total}`;
+} else {
+    lines.push(`Total: ${total}`);
+    lines.join("\n");
+}
+JS

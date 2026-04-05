@@ -1,0 +1,48 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Close duplicate Chrome tabs (keeps the first occurrence of each URL).
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "Usage: tabby dedup [--dry-run]"
+    echo "  --dry-run   Show what would be closed without closing"
+    exit 0
+fi
+
+dry_run=false
+[[ "${1:-}" == "--dry-run" ]] && dry_run=true
+
+osascript -l JavaScript - "$dry_run" <<'JS'
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const dryRun = args[4].js === "true";
+const chrome = Application("Google Chrome");
+const seen = {};
+const toClose = [];
+
+const windows = chrome.windows();
+for (let wi = 0; wi < windows.length; wi++) {
+    const tabs = windows[wi].tabs();
+    for (let ti = 0; ti < tabs.length; ti++) {
+        const url = tabs[ti].url();
+        if (seen[url]) {
+            toClose.push({wi, ti, title: tabs[ti].title(), url});
+        } else {
+            seen[url] = true;
+        }
+    }
+}
+
+if (toClose.length === 0) {
+    "No duplicates found.";
+} else if (dryRun) {
+    const lines = toClose.map(t => `Would close: ${t.title} (${t.url})`);
+    lines.push(`\n${toClose.length} duplicate(s) found.`);
+    lines.join("\n");
+} else {
+    for (let i = toClose.length - 1; i >= 0; i--) {
+        const t = toClose[i];
+        chrome.windows[t.wi].tabs[t.ti].close();
+    }
+    `Closed ${toClose.length} duplicate tab(s).`;
+}
+JS

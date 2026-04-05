@@ -1,0 +1,29 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Get the URL of a Chrome tab.
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "Usage: tabby url [<window> <tab>]"
+    echo "  With no args, prints the URL of the active tab."
+    echo "  With args, prints the URL of the specified tab."
+    exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+    osascript -l JavaScript <<'JS'
+const chrome = Application("Google Chrome");
+chrome.windows[0].activeTab().url();
+JS
+elif [[ $# -eq 2 ]]; then
+    osascript -l JavaScript - "$1" "$2" <<'JS'
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const wi = parseInt(args[4].js);
+const ti = parseInt(args[5].js);
+const chrome = Application("Google Chrome");
+chrome.windows[wi - 1].tabs[ti - 1].url();
+JS
+else
+    echo "Usage: tabby url [<window> <tab>]" >&2
+    exit 1
+fi
