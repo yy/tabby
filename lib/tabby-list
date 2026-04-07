@@ -4,8 +4,12 @@ set -euo pipefail
 # List all Chrome tabs as JSON.
 # Output: array of {window, tab, title, url} objects.
 
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby list [--window N]"
+
 if [[ "${1:-}" == "--help" ]]; then
-    echo "Usage: tabby list [--window N]"
+    echo "$usage"
     echo "  List all Chrome tabs as JSON."
     echo "  --window N   Only list tabs in window N"
     exit 0
@@ -14,8 +18,15 @@ fi
 window_filter=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --window) window_filter="$2"; shift 2 ;;
-        *) echo "Usage: tabby list [--window N]" >&2; exit 1 ;;
+        --window)
+            [[ $# -ge 2 ]] || usage_error "$usage"
+            require_positive_int "window" "$2" "$usage"
+            window_filter="$2"
+            shift 2
+            ;;
+        *)
+            usage_error "$usage"
+            ;;
     esac
 done
 

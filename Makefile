@@ -5,3 +5,6 @@ install:
 
 uninstall:
 	rm -f $(PREFIX)/bin/tabby
+
+test:
+	zsh tests/cli.zsh

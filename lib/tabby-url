@@ -3,8 +3,12 @@ set -euo pipefail
 
 # Get the URL of a Chrome tab.
 
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby url [<window> <tab>]"
+
 if [[ "${1:-}" == "--help" ]]; then
-    echo "Usage: tabby url [<window> <tab>]"
+    echo "$usage"
     echo "  With no args, prints the URL of the active tab."
     echo "  With args, prints the URL of the specified tab."
     exit 0
@@ -12,18 +16,52 @@ fi
 
 if [[ $# -eq 0 ]]; then
     osascript -l JavaScript <<'JS'
+ObjC.import("Foundation");
+ObjC.import("stdlib");
+
+function fail(message) {
+    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
+    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
+    $.exit(1);
+}
+
 const chrome = Application("Google Chrome");
-chrome.windows[0].activeTab().url();
+const windows = chrome.windows();
+if (windows.length === 0) {
+    fail("tabby: no Chrome windows are open");
+}
+
+windows[0].activeTab().url();
 JS
 elif [[ $# -eq 2 ]]; then
+    require_positive_int "window" "$1" "$usage"
+    require_positive_int "tab" "$2" "$usage"
     osascript -l JavaScript - "$1" "$2" <<'JS'
+ObjC.import("Foundation");
+ObjC.import("stdlib");
+
+function fail(message) {
+    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
+    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
+    $.exit(1);
+}
+
 const args = $.NSProcessInfo.processInfo.arguments.js;
 const wi = parseInt(args[4].js);
 const ti = parseInt(args[5].js);
 const chrome = Application("Google Chrome");
-chrome.windows[wi - 1].tabs[ti - 1].url();
+const windows = chrome.windows();
+if (wi > windows.length) {
+    fail(`tabby: window ${wi} does not exist`);
+}
+
+const tabs = windows[wi - 1].tabs();
+if (ti > tabs.length) {
+    fail(`tabby: tab ${ti} does not exist in window ${wi}`);
+}
+
+tabs[ti - 1].url();
 JS
 else
-    echo "Usage: tabby url [<window> <tab>]" >&2
-    exit 1
+    usage_error "$usage"
 fi

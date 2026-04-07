@@ -3,15 +3,28 @@ set -euo pipefail
 
 # Count Chrome tabs.
 
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby count [--total]"
+
 if [[ "${1:-}" == "--help" ]]; then
-    echo "Usage: tabby count [--total]"
+    echo "$usage"
     echo "  Count open tabs per window."
     echo "  --total   Print only the total number"
     exit 0
 fi
 
 total_only=false
-[[ "${1:-}" == "--total" ]] && total_only=true
+case $# in
+    0) ;;
+    1)
+        [[ "$1" == "--total" ]] || usage_error "$usage"
+        total_only=true
+        ;;
+    *)
+        usage_error "$usage"
+        ;;
+esac
 
 osascript -l JavaScript - "$total_only" <<'JS'
 const args = $.NSProcessInfo.processInfo.arguments.js;

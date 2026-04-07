@@ -1,0 +1,25 @@
+#!/bin/zsh
+
+usage_error() {
+    local usage="$1"
+    local message="${2:-}"
+
+    if [[ -n "$message" ]]; then
+        echo "tabby: $message" >&2
+    fi
+
+    echo "$usage" >&2
+    exit 1
+}
+
+is_positive_int() {
+    [[ $# -eq 1 && "$1" == <-> && "$1" != 0 ]]
+}
+
+require_positive_int() {
+    local name="$1"
+    local value="$2"
+    local usage="$3"
+
+    is_positive_int "$value" || usage_error "$usage" "$name must be a positive integer"
+}

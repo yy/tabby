@@ -3,23 +3,48 @@ set -euo pipefail
 
 # Close a Chrome tab by window and tab index.
 
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby close <window> <tab>"
+
 if [[ "${1:-}" == "--help" ]]; then
-    echo "Usage: tabby close <window> <tab>"
+    echo "$usage"
     exit 0
 fi
 
 if [[ $# -ne 2 ]]; then
-    echo "Usage: tabby close <window> <tab>" >&2
-    exit 1
+    usage_error "$usage"
 fi
 
+require_positive_int "window" "$1" "$usage"
+require_positive_int "tab" "$2" "$usage"
+
 osascript -l JavaScript - "$1" "$2" <<'JS'
+ObjC.import("Foundation");
+ObjC.import("stdlib");
+
+function fail(message) {
+    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
+    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
+    $.exit(1);
+}
+
 const args = $.NSProcessInfo.processInfo.arguments.js;
 const wi = parseInt(args[4].js);
 const ti = parseInt(args[5].js);
 const chrome = Application("Google Chrome");
-const win = chrome.windows[wi - 1];
-const tab = win.tabs[ti - 1];
+const windows = chrome.windows();
+if (wi > windows.length) {
+    fail(`tabby: window ${wi} does not exist`);
+}
+
+const win = windows[wi - 1];
+const tabs = win.tabs();
+if (ti > tabs.length) {
+    fail(`tabby: tab ${ti} does not exist in window ${wi}`);
+}
+
+const tab = tabs[ti - 1];
 const title = tab.title();
 tab.close();
 `Closed: ${title}`;

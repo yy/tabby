@@ -3,14 +3,27 @@ set -euo pipefail
 
 # Close duplicate Chrome tabs (keeps the first occurrence of each URL).
 
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby dedup [--dry-run]"
+
 if [[ "${1:-}" == "--help" ]]; then
-    echo "Usage: tabby dedup [--dry-run]"
+    echo "$usage"
     echo "  --dry-run   Show what would be closed without closing"
     exit 0
 fi
 
 dry_run=false
-[[ "${1:-}" == "--dry-run" ]] && dry_run=true
+case $# in
+    0) ;;
+    1)
+        [[ "$1" == "--dry-run" ]] || usage_error "$usage"
+        dry_run=true
+        ;;
+    *)
+        usage_error "$usage"
+        ;;
+esac
 
 osascript -l JavaScript - "$dry_run" <<'JS'
 const args = $.NSProcessInfo.processInfo.arguments.js;
