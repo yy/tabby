@@ -1,51 +1,68 @@
 #!/bin/zsh
 set -euo pipefail
 
-# Close a Chrome tab by window and tab index.
+# Close a browser tab by window and tab index.
 
 source "${0:A:h}/tabby-common"
 
-usage="Usage: tabby close <window> <tab>"
+usage="Usage: tabby close [--expect \"title prefix\"] <window> <tab>"
 
-if [[ "${1:-}" == "--help" ]]; then
-    echo "$usage"
-    exit 0
-fi
+expect=""
+positional=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --help)
+            echo "$usage"
+            echo "  --expect STR  Only close if tab title starts with STR (case-insensitive)"
+            exit 0
+            ;;
+        --expect)
+            [[ $# -ge 2 ]] || usage_error "$usage"
+            expect="$2"
+            shift 2
+            ;;
+        *)
+            positional+=("$1")
+            shift
+            ;;
+    esac
+done
 
-if [[ $# -ne 2 ]]; then
+if [[ ${#positional[@]} -ne 2 ]]; then
     usage_error "$usage"
 fi
 
-require_positive_int "window" "$1" "$usage"
-require_positive_int "tab" "$2" "$usage"
+require_positive_int "window" "${positional[1]}" "$usage"
+require_positive_int "tab" "${positional[2]}" "$usage"
 
-osascript -l JavaScript - "$1" "$2" <<'JS'
-ObjC.import("Foundation");
-ObjC.import("stdlib");
-
-function fail(message) {
-    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
-    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
-    $.exit(1);
-}
-
+{
+cat "$BROWSER_JS"
+cat <<'JS'
+const browser = getBrowser();
 const args = $.NSProcessInfo.processInfo.arguments.js;
 const wi = parseInt(args[4].js);
 const ti = parseInt(args[5].js);
-const chrome = Application("Google Chrome");
-const windows = chrome.windows();
+const expect = args[6].js;
+
+const windows = browser.windows();
 if (wi > windows.length) {
     fail(`tabby: window ${wi} does not exist`);
 }
 
 const win = windows[wi - 1];
-const tabs = win.tabs();
+const tabs = browser.tabs(win);
 if (ti > tabs.length) {
     fail(`tabby: tab ${ti} does not exist in window ${wi}`);
 }
 
 const tab = tabs[ti - 1];
-const title = tab.title();
+const title = browser.tabTitle(tab);
+
+if (expect && !title.toLowerCase().startsWith(expect.toLowerCase())) {
+    fail(`tabby: title mismatch at ${wi}/${ti}\n  expected: "${expect}..."\n  actual:   "${title}"`);
+}
+
 tab.close();
 `Closed: ${title}`;
 JS
+} | osascript -l JavaScript - "${positional[1]}" "${positional[2]}" "$expect"

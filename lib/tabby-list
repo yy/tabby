@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-# List all Chrome tabs as JSON.
+# List browser tabs as JSON.
 # Output: array of {window, tab, title, url} objects.
 
 source "${0:A:h}/tabby-common"
@@ -10,7 +10,7 @@ usage="Usage: tabby list [--window N]"
 
 if [[ "${1:-}" == "--help" ]]; then
     echo "$usage"
-    echo "  List all Chrome tabs as JSON."
+    echo "  List all tabs as JSON."
     echo "  --window N   Only list tabs in window N"
     exit 0
 fi
@@ -30,22 +30,25 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-osascript -l JavaScript - "$window_filter" <<'JS'
-const chrome = Application("Google Chrome");
+{
+cat "$BROWSER_JS"
+cat <<'JS'
+const browser = getBrowser();
 const windowFilter = $.NSProcessInfo.processInfo.arguments.js[4].js;
 const result = [];
-const windows = chrome.windows();
+const windows = browser.windows();
 for (let wi = 0; wi < windows.length; wi++) {
     if (windowFilter && String(wi + 1) !== windowFilter) continue;
-    const tabs = windows[wi].tabs();
+    const tabs = browser.tabs(windows[wi]);
     for (let ti = 0; ti < tabs.length; ti++) {
         result.push({
             window: wi + 1,
             tab: ti + 1,
-            title: tabs[ti].title(),
-            url: tabs[ti].url()
+            title: browser.tabTitle(tabs[ti]),
+            url: browser.tabUrl(tabs[ti])
         });
     }
 }
 JSON.stringify(result);
 JS
+} | osascript -l JavaScript - "$window_filter"

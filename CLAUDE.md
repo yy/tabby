@@ -1,6 +1,6 @@
 # tabby
 
-Mac CLI for managing Chrome browser tabs. Pure zsh + JXA, no dependencies.
+Mac CLI for managing browser tabs (Chrome & Safari). Pure zsh + JXA, no dependencies.
 
 ## Commands
 
@@ -12,12 +12,23 @@ tabby count --total     # Just the number
 tabby url               # Active tab URL
 tabby url 1 3           # Specific tab URL
 tabby close 1 5         # Close by window/tab index
+tabby close --expect "GitHub" 1 5   # Close only if title starts with "GitHub"
 tabby dedup --dry-run   # Preview duplicate tabs
 tabby dedup             # Close duplicates
 ```
 
+## Browser selection
+
+```bash
+tabby --browser safari list         # Use Safari instead of Chrome
+TABBY_BROWSER=safari tabby list     # Same, via env var
+```
+
+Default: `chrome`. Set `TABBY_BROWSER=safari` in your shell profile to switch permanently.
+
 ## Patterns
 
 - `tabby list` output is JSON — pipe through `jq` for filtering
-- Tab indices shift after closing — close from highest index first, or re-list between closes
+- Tab indices shift after closing — use `--expect` to verify title before closing
+- Browser-specific JXA is in `lib/browser.js`; commands use the shared abstraction
 - Adding new subcommands: create `lib/tabby-<name>` (executable zsh + JXA script)

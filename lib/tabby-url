@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-# Get the URL of a Chrome tab.
+# Get the URL of a browser tab.
 
 source "${0:A:h}/tabby-common"
 
@@ -15,53 +15,41 @@ if [[ "${1:-}" == "--help" ]]; then
 fi
 
 if [[ $# -eq 0 ]]; then
-    osascript -l JavaScript <<'JS'
-ObjC.import("Foundation");
-ObjC.import("stdlib");
-
-function fail(message) {
-    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
-    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
-    $.exit(1);
-}
-
-const chrome = Application("Google Chrome");
-const windows = chrome.windows();
+    {
+    cat "$BROWSER_JS"
+    cat <<'JS'
+const browser = getBrowser();
+const windows = browser.windows();
 if (windows.length === 0) {
-    fail("tabby: no Chrome windows are open");
+    fail("tabby: no browser windows are open");
 }
-
-windows[0].activeTab().url();
+browser.tabUrl(browser.activeTab(windows[0]));
 JS
+    } | osascript -l JavaScript -
 elif [[ $# -eq 2 ]]; then
     require_positive_int "window" "$1" "$usage"
     require_positive_int "tab" "$2" "$usage"
-    osascript -l JavaScript - "$1" "$2" <<'JS'
-ObjC.import("Foundation");
-ObjC.import("stdlib");
-
-function fail(message) {
-    const data = $(message + "\n").dataUsingEncoding($.NSUTF8StringEncoding);
-    $.NSFileHandle.fileHandleWithStandardError.writeData(data);
-    $.exit(1);
-}
-
+    {
+    cat "$BROWSER_JS"
+    cat <<'JS'
+const browser = getBrowser();
 const args = $.NSProcessInfo.processInfo.arguments.js;
 const wi = parseInt(args[4].js);
 const ti = parseInt(args[5].js);
-const chrome = Application("Google Chrome");
-const windows = chrome.windows();
+
+const windows = browser.windows();
 if (wi > windows.length) {
     fail(`tabby: window ${wi} does not exist`);
 }
 
-const tabs = windows[wi - 1].tabs();
+const tabs = browser.tabs(windows[wi - 1]);
 if (ti > tabs.length) {
     fail(`tabby: tab ${ti} does not exist in window ${wi}`);
 }
 
-tabs[ti - 1].url();
+browser.tabUrl(tabs[ti - 1]);
 JS
+    } | osascript -l JavaScript - "$1" "$2"
 else
     usage_error "$usage"
 fi

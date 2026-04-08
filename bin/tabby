@@ -10,7 +10,7 @@ usage() {
     cat <<'USAGE'
 tabby — herd your browser tabs
 
-Usage: tabby <command> [options]
+Usage: tabby [--browser chrome|safari] <command> [options]
 
 Commands:
   list          List all tabs as JSON
@@ -20,9 +20,27 @@ Commands:
   dedup         Close duplicate tabs
   help          Show this help
 
+Global options:
+  --browser     Browser to control (chrome or safari, default: chrome)
+                Also settable via TABBY_BROWSER env var.
+
 Options vary by command. Run `tabby <command> --help` for details.
 USAGE
 }
+
+# Parse global flags before subcommand
+while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+        --browser)
+            [[ $# -ge 2 ]] || { echo "tabby: --browser requires an argument" >&2; exit 1; }
+            export TABBY_BROWSER="$2"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 cmd="${1:-help}"
 shift 2>/dev/null || true

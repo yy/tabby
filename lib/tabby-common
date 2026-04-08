@@ -1,5 +1,15 @@
 #!/bin/zsh
 
+# Browser detection: --browser flag or TABBY_BROWSER env var, default chrome
+TABBY_BROWSER="${TABBY_BROWSER:-chrome}"
+case "$TABBY_BROWSER" in
+    chrome|safari) ;;
+    *) echo "tabby: unsupported browser '$TABBY_BROWSER' (use chrome or safari)" >&2; exit 1 ;;
+esac
+export TABBY_BROWSER
+
+BROWSER_JS="${0:A:h}/browser.js"
+
 usage_error() {
     local usage="$1"
     local message="${2:-}"

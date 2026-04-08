@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-# Count Chrome tabs.
+# Count browser tabs.
 
 source "${0:A:h}/tabby-common"
 
@@ -26,15 +26,17 @@ case $# in
         ;;
 esac
 
-osascript -l JavaScript - "$total_only" <<'JS'
+{
+cat "$BROWSER_JS"
+cat <<'JS'
+const browser = getBrowser();
 const args = $.NSProcessInfo.processInfo.arguments.js;
 const totalOnly = args[4].js === "true";
-const chrome = Application("Google Chrome");
-const windows = chrome.windows();
+const windows = browser.windows();
 let total = 0;
 const lines = [];
 for (let wi = 0; wi < windows.length; wi++) {
-    const count = windows[wi].tabs().length;
+    const count = browser.tabs(windows[wi]).length;
     total += count;
     lines.push(`Window ${wi + 1}: ${count} tabs`);
 }
@@ -45,3 +47,4 @@ if (totalOnly) {
     lines.join("\n");
 }
 JS
+} | osascript -l JavaScript - "$total_only"
