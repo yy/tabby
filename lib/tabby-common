@@ -4,7 +4,7 @@
 TABBY_BROWSER="${TABBY_BROWSER:-chrome}"
 case "$TABBY_BROWSER" in
     chrome|safari) ;;
-    *) echo "tabby: unsupported browser '$TABBY_BROWSER' (use chrome or safari)" >&2; exit 1 ;;
+    *) print -r "tabby: unsupported browser '$TABBY_BROWSER' (use chrome or safari)" >&2; exit 1 ;;
 esac
 export TABBY_BROWSER
 

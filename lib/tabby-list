@@ -51,4 +51,4 @@ for (let wi = 0; wi < windows.length; wi++) {
 }
 JSON.stringify(result);
 JS
-} | osascript -l JavaScript - "$window_filter"
+} | /usr/bin/osascript -l JavaScript - "$window_filter"

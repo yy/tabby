@@ -61,4 +61,4 @@ if (toClose.length === 0) {
     `Closed ${toClose.length} duplicate tab(s).`;
 }
 JS
-} | osascript -l JavaScript - "$dry_run"
+} | /usr/bin/osascript -l JavaScript - "$dry_run"

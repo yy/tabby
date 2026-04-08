@@ -25,7 +25,7 @@ if (windows.length === 0) {
 }
 browser.tabUrl(browser.activeTab(windows[0]));
 JS
-    } | osascript -l JavaScript -
+    } | /usr/bin/osascript -l JavaScript -
 elif [[ $# -eq 2 ]]; then
     require_positive_int "window" "$1" "$usage"
     require_positive_int "tab" "$2" "$usage"
@@ -49,7 +49,7 @@ if (ti > tabs.length) {
 
 browser.tabUrl(tabs[ti - 1]);
 JS
-    } | osascript -l JavaScript - "$1" "$2"
+    } | /usr/bin/osascript -l JavaScript - "$1" "$2"
 else
     usage_error "$usage"
 fi

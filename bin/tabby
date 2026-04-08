@@ -45,13 +45,24 @@ done
 cmd="${1:-help}"
 shift 2>/dev/null || true
 
+# Validate command name: alphanumeric and hyphens only (prevent path traversal)
+if [[ ! "$cmd" =~ ^[a-zA-Z][a-zA-Z0-9-]*$ ]]; then
+    if [[ "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+        usage
+        exit 0
+    fi
+    print -r "tabby: unknown command '$cmd'" >&2
+    echo "Run 'tabby help' for usage." >&2
+    exit 1
+fi
+
 subcmd="$LIBDIR/tabby-$cmd"
 if [[ -x "$subcmd" ]]; then
     exec "$subcmd" "$@"
-elif [[ "$cmd" == "help" || "$cmd" == "--help" || "$cmd" == "-h" ]]; then
+elif [[ "$cmd" == "help" ]]; then
     usage
 else
-    echo "tabby: unknown command '$cmd'" >&2
+    print -r "tabby: unknown command '$cmd'" >&2
     echo "Run 'tabby help' for usage." >&2
     exit 1
 fi

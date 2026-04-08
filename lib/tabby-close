@@ -65,4 +65,4 @@ if (expect && !title.toLowerCase().startsWith(expect.toLowerCase())) {
 tab.close();
 `Closed: ${title}`;
 JS
-} | osascript -l JavaScript - "${positional[1]}" "${positional[2]}" "$expect"
+} | /usr/bin/osascript -l JavaScript - "${positional[1]}" "${positional[2]}" "$expect"

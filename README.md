@@ -34,10 +34,36 @@ tabby list | jq '.[] | select(.url | test("github.com"))'
 tabby list | jq -r '.[].url' | awk -F/ '{print $3}' | sort | uniq -c | sort -rn
 
 # Close all Google search tabs (careful!)
-tabby list | jq -r '.[] | select(.url | test("google.com/search")) | "\(.window) \(.tab)"' | while read w t; do tabby close $w $t; done
+tabby list | jq -r '.[] | select(.url | test("google.com/search")) | "\(.window) \(.tab)"' \
+  | while IFS=' ' read -r w t; do tabby close "$w" "$t"; done
 ```
+
+## Browser selection
+
+```bash
+tabby --browser safari list         # Use Safari
+TABBY_BROWSER=safari tabby list     # Same, via env var
+```
+
+Default: `chrome`. Set `TABBY_BROWSER=safari` in your shell profile to switch permanently.
+
+## Safe close
+
+Tab indices shift when tabs are closed. Use `--expect` to verify a tab's title before closing:
+
+```bash
+tabby close --expect "GitHub" 1 5   # Only closes if title starts with "GitHub"
+```
+
+## Permissions
+
+On first run, macOS will prompt you to grant your terminal Automation access to Chrome (or Safari). This allows tabby to read tab titles/URLs and close tabs. You can revoke this in System Settings > Privacy & Security > Automation.
+
+## Privacy
+
+`tabby list` outputs all tab titles and URLs to stdout. Be mindful when piping to files or logs — URLs may contain tokens, session IDs, or reveal private browsing activity.
 
 ## Requirements
 
 - macOS
-- Google Chrome
+- Google Chrome or Safari
