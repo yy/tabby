@@ -1,0 +1,48 @@
+#!/bin/zsh
+set -euo pipefail
+
+# Focus (switch to) a browser tab by window and tab index.
+
+source "${0:A:h}/tabby-common"
+
+usage="Usage: tabby focus <window> <tab>"
+
+if [[ "${1:-}" == "--help" ]]; then
+    echo "$usage"
+    echo "  Switch to a tab by window and tab index."
+    exit 0
+fi
+
+if [[ $# -ne 2 ]]; then
+    usage_error "$usage"
+fi
+
+require_positive_int "window" "$1" "$usage"
+require_positive_int "tab" "$2" "$usage"
+
+{
+cat "$BROWSER_JS"
+cat <<'JS'
+const browser = getBrowser();
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const wi = parseInt(args[4].js);
+const ti = parseInt(args[5].js);
+
+const windows = browser.windows();
+if (wi > windows.length) {
+    fail(`tabby: window ${wi} does not exist`);
+}
+
+const win = windows[wi - 1];
+const tabs = browser.tabs(win);
+if (ti > tabs.length) {
+    fail(`tabby: tab ${ti} does not exist in window ${wi}`);
+}
+
+const tab = tabs[ti - 1];
+browser.setActiveTab(win, tab, ti);
+win.index = 1;
+browser.app.activate();
+`Focused: ${browser.tabTitle(tab)}`;
+JS
+} | /usr/bin/osascript -l JavaScript - "$1" "$2"

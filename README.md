@@ -20,6 +20,7 @@ tabby count --total     # Just the total
 tabby url               # URL of active tab
 tabby url 1 3           # URL of window 1, tab 3
 tabby close 1 5         # Close window 1, tab 5
+tabby focus 1 3         # Switch to window 1, tab 3
 tabby dedup             # Close duplicate tabs
 tabby dedup --dry-run   # Preview duplicates
 ```

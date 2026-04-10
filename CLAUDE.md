@@ -13,6 +13,7 @@ tabby url               # Active tab URL
 tabby url 1 3           # Specific tab URL
 tabby close 1 5         # Close by window/tab index
 tabby close --expect "GitHub" 1 5   # Close only if title starts with "GitHub"
+tabby focus 1 3         # Switch to window 1, tab 3
 tabby dedup --dry-run   # Preview duplicate tabs
 tabby dedup             # Close duplicates
 ```

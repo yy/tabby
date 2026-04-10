@@ -18,6 +18,7 @@ Commands:
   url           Get URL of active or specific tab
   close         Close a tab by window/tab index
   dedup         Close duplicate tabs
+  focus         Switch to a tab by window/tab index
   help          Show this help
 
 Global options:
