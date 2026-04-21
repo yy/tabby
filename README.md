@@ -1,6 +1,10 @@
+<p align="center">
+  <img src="assets/tabby-logo.png" alt="tabby logo" width="360">
+</p>
+
 # tabby
 
-![Claude Insights quote: "User asked Claude to close 114 browser tabs in one session — the digital equivalent of finally cleaning out the garage"](claude-insights-tabby.jpg)
+![Claude Insights quote: "User asked Claude to close 114 browser tabs in one session — the digital equivalent of finally cleaning out the garage"](assets/claude-insights-tabby.jpg)
 
 A Mac CLI for herding browser tabs. Pure zsh + JXA, no dependencies.
 
