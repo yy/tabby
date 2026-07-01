@@ -94,4 +94,24 @@ output="$(run 1 close 1 nope)"
 assert_contains "$output" "tabby: tab must be a positive integer"
 assert_no_osascript
 
+reset_log
+output="$(run 1 close --url)"
+assert_contains "$output" "Usage: tabby close"
+assert_no_osascript
+
+reset_log
+output="$(run 1 close --url github.com 1 2)"
+assert_contains "$output" "--url cannot be combined with window/tab indices"
+assert_no_osascript
+
+reset_log
+output="$(run 1 close --url github.com --expect Foo)"
+assert_contains "$output" "--url cannot be combined with --expect"
+assert_no_osascript
+
+reset_log
+output="$(run 1 close --all 1 2)"
+assert_contains "$output" "--all is only valid with --url"
+assert_no_osascript
+
 echo "ok"

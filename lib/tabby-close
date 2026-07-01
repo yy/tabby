@@ -1,25 +1,42 @@
 #!/bin/zsh
 set -euo pipefail
 
-# Close a browser tab by window and tab index.
+# Close a browser tab by window/tab index, or by URL substring.
 
 source "${0:A:h}/tabby-common"
 
-usage="Usage: tabby close [--expect \"title prefix\"] <window> <tab>"
+usage="Usage: tabby close [--expect \"title prefix\"] <window> <tab>
+       tabby close --url <substr> [--all]"
 
 expect=""
+url_match=""
+close_all="0"
+have_url="0"
 positional=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --help)
             echo "$usage"
             echo "  --expect STR  Only close if tab title starts with STR (case-insensitive)"
+            echo "  --url SUBSTR  Close the first tab whose URL contains SUBSTR (case-insensitive)."
+            echo "                Finds and closes atomically, immune to window reordering."
+            echo "  --all         With --url, close every matching tab instead of just the first"
             exit 0
             ;;
         --expect)
             [[ $# -ge 2 ]] || usage_error "$usage"
             expect="$2"
             shift 2
+            ;;
+        --url)
+            [[ $# -ge 2 ]] || usage_error "$usage"
+            url_match="$2"
+            have_url="1"
+            shift 2
+            ;;
+        --all)
+            close_all="1"
+            shift
             ;;
         *)
             positional+=("$1")
@@ -28,13 +45,64 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ ${#positional[@]} -ne 2 ]]; then
-    usage_error "$usage"
+if [[ "$have_url" == "1" ]]; then
+    if [[ ${#positional[@]} -ne 0 ]]; then
+        usage_error "$usage" "--url cannot be combined with window/tab indices"
+    fi
+    if [[ -n "$expect" ]]; then
+        usage_error "$usage" "--url cannot be combined with --expect"
+    fi
+    if [[ -z "$url_match" ]]; then
+        usage_error "$usage" "--url requires a non-empty substring"
+    fi
+    mode="url"
+else
+    if [[ "$close_all" == "1" ]]; then
+        usage_error "$usage" "--all is only valid with --url"
+    fi
+    if [[ ${#positional[@]} -ne 2 ]]; then
+        usage_error "$usage"
+    fi
+    require_positive_int "window" "${positional[1]}" "$usage"
+    require_positive_int "tab" "${positional[2]}" "$usage"
+    mode="index"
 fi
 
-require_positive_int "window" "${positional[1]}" "$usage"
-require_positive_int "tab" "${positional[2]}" "$usage"
+if [[ "$mode" == "url" ]]; then
+{
+cat "$BROWSER_JS"
+cat <<'JS'
+const browser = getBrowser();
+const args = $.NSProcessInfo.processInfo.arguments.js;
+const needle = args[4].js.toLowerCase();
+const all = args[5].js === "1";
 
+const closed = [];
+const windows = browser.windows();
+outer:
+for (let wi = 0; wi < windows.length; wi++) {
+    const tabs = browser.tabs(windows[wi]);
+    // Iterate in reverse so closing a tab does not shift the indices of
+    // tabs we have not yet examined in this window.
+    for (let ti = tabs.length - 1; ti >= 0; ti--) {
+        const tab = tabs[ti];
+        if (browser.tabUrl(tab).toLowerCase().includes(needle)) {
+            const title = browser.tabTitle(tab);
+            tab.close();
+            closed.push(title);
+            if (!all) break outer;
+        }
+    }
+}
+
+if (closed.length === 0) {
+    fail(`tabby: no open tab with URL containing "${args[4].js}"`);
+}
+
+closed.reverse().map((t) => `Closed: ${t}`).join("\n");
+JS
+} | /usr/bin/osascript -l JavaScript - "$url_match" "$close_all"
+else
 {
 cat "$BROWSER_JS"
 cat <<'JS'
@@ -66,3 +134,4 @@ tab.close();
 `Closed: ${title}`;
 JS
 } | /usr/bin/osascript -l JavaScript - "${positional[1]}" "${positional[2]}" "$expect"
+fi

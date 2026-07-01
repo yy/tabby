@@ -16,7 +16,7 @@ Commands:
   list          List all tabs as JSON
   count         Count open tabs
   url           Get URL of active or specific tab
-  close         Close a tab by window/tab index
+  close         Close a tab by window/tab index, or by URL substring
   dedup         Close duplicate tabs
   focus         Switch to a tab by window/tab index
   help          Show this help
