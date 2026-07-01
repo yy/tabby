@@ -30,6 +30,7 @@ tabby close --url arxiv # Close first tab whose URL contains "arxiv"
 tabby focus 1 3         # Switch to window 1, tab 3
 tabby dedup             # Close duplicate tabs
 tabby dedup --dry-run   # Preview duplicates
+tabby version           # Print version (also --version, -v)
 ```
 
 Composes with standard tools:

@@ -114,4 +114,14 @@ output="$(run 1 close --all 1 2)"
 assert_contains "$output" "--all is only valid with --url"
 assert_no_osascript
 
+reset_log
+output="$(run 0 version)"
+assert_contains "$output" "tabby 0.1.0"
+assert_no_osascript
+
+reset_log
+output="$(run 0 --version)"
+assert_contains "$output" "tabby 0.1.0"
+assert_no_osascript
+
 echo "ok"

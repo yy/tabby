@@ -18,6 +18,7 @@ tabby close --url github.com --all  # Close every tab whose URL matches
 tabby focus 1 3         # Switch to window 1, tab 3
 tabby dedup --dry-run   # Preview duplicate tabs
 tabby dedup             # Close duplicates
+tabby version           # Print version (also --version, -v); sourced from ./VERSION
 ```
 
 ## Browser selection
